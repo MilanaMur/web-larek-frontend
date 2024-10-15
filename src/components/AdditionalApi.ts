@@ -1,12 +1,30 @@
 import { Api, ApiListResponse } from './base/api';
-import { IItem, IOrder } from '../types/index';
+import { IItem, IOrderModel, IOrderResult } from '../types/index';
 
 export class AdditionalApi extends Api {
-    constructor(baseUrl: string, options: RequestInit) {}
+	readonly cdn: string;
 
-    getItemsList(): Promise<IItem[]> {}
+	constructor(cdn: string, baseUrl: string, options?: RequestInit) {
+		super(baseUrl, options);
 
-    getItem(id: string): Promise<IItem> {}
+		this.cdn = cdn;
+	}
 
-    makeOrder(order: IOrder): Promise {}
+	getItemsList(): Promise<IItem[]> {
+		return this.get('/product/').then((data: ApiListResponse<IItem>) =>
+			data.items.map((item: IItem) => ({
+				...item,
+				image: this.cdn + item.image,
+			}))
+		);
+	}
+
+	sendOrder(
+		order: IOrderModel,
+		total: number,
+		items: string[]
+	): Promise<Partial<IOrderResult>> {
+		const data = { ...order, total, items };
+		return this.post('/order', data);
+	}
 }
