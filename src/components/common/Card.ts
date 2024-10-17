@@ -32,10 +32,6 @@ export class Card extends Component<ICard> {
 		return this.container.dataset.id || '';
 	}
 
-	set id(value: string) {
-		this.container.dataset.id = value;
-	}
-
 	get title(): string {
 		return this._title.textContent || '';
 	}
@@ -46,7 +42,7 @@ export class Card extends Component<ICard> {
 
 	set buttonText(value: string) {
 		this._button.textContent = value;
-	  }
+	}
 
 	set price(value: number | null) {
 		if (value === null) {
@@ -54,7 +50,7 @@ export class Card extends Component<ICard> {
 		} else {
 			this.setText(this._price, `${value} синапсов`);
 		}
-		
+
 		if (this._button && value === null) {
 			this._button.disabled = true;
 		}

@@ -1,4 +1,4 @@
-import { FormErrors, IAppState, IItem, IOrderModel } from '../types';
+import { FormErrors, IAppState, IItem, IOrderModel, TPayment } from '../types';
 import { Model } from './base/Model';
 
 export class AppState extends Model<IAppState> {
@@ -10,26 +10,26 @@ export class AppState extends Model<IAppState> {
 		email: '',
 		phone: '',
 	};
-	preview: string | null;
 	formErrors: FormErrors = {};
 
 	setCatalog(items: IItem[]): void {
 		this.catalog = items;
-		this.emitChanges('catalog:changed', { catalog: this.catalog });
+		this.emitChanges('catalog:changed');
 	}
 
 	addToBasket(item: IItem): void {
 		this.basket.push(item);
-		this.emitChanges('basket:changed', { basket: this.basket });
+		this.emitChanges('basket:changed');
 	}
 
-	removeFromBasket(id: string) {
-		this.basket = this.basket.filter((item) => item.id !== id);
-		this.emitChanges('basket:changed', { basket: this.basket });
+	removeFromBasket(item: IItem) {
+		this.basket = this.basket.filter((i) => i.id !== item.id);
+		this.emitChanges('basket:changed');
 	}
 
 	clearBasket(): void {
 		this.basket = [];
+		this.emitChanges('basket:changed');
 	}
 
 	isInBasket(id: string): boolean {
@@ -37,7 +37,6 @@ export class AppState extends Model<IAppState> {
 	}
 
 	setPreview(item: IItem) {
-		this.preview = item.id;
 		this.emitChanges('card:select', item);
 	}
 
@@ -97,5 +96,14 @@ export class AppState extends Model<IAppState> {
 		this.events.emit('formContactsErrors:change', this.formErrors);
 
 		return Object.keys(errors).length === 0;
+	}
+
+	clearOrderInfo(): IOrderModel {
+		return (this.orderInfo = {
+			payment: '',
+			address: '',
+			email: '',
+			phone: '',
+		});
 	}
 }

@@ -12,7 +12,6 @@ export class CatalogCard extends Card {
 		'другое': 'other',
 	};
 	protected _image: HTMLImageElement;
-	protected _selected: boolean;
 
 	constructor(
 		container: HTMLElement,

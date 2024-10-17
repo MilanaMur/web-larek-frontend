@@ -50,10 +50,6 @@ export class Form<T> extends Component<IFormState> {
 		Object.assign(this, inputs);
 		return this.container;
 	}
-
-	clearForm() {
-		this.container.reset();
-	}
 }
 
 export class FormOrder extends Form<Partial<IOrderModel>> {

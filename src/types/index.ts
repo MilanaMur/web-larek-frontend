@@ -5,18 +5,18 @@ export interface IItem {
 	title: string;
 	category: string;
 	price: number | null;
-	selected: boolean;
+	index?: number;
 }
 
 export interface IAppState {
 	catalog: IItem[];
 	basket: IItem[];
+	// payment: TPayment;
 	orderInfo: IOrderModel;
-	preview: string | null;
 	formErrors: FormErrors;
 	setCatalog(data: IItem[]): void;
 	addToBasket(item: IItem): void;
-	removeFromBasket(id: string): void;
+	removeFromBasket(item: IItem): void;
 	clearBasket(): void;
 	isInBasket(id: string): boolean;
 	setPreview(item: IItem): void;
@@ -52,25 +52,19 @@ export interface IFormState {
 export interface IPage {
 	counter: number;
 	catalog: HTMLElement[];
+	wrapper: HTMLElement;
 	basket: HTMLElement;
 	locked: boolean;
 }
 
 export interface ICard {
-	id: string;
-	description?: string;
-	image?: string;
 	title: string;
-	category?: string;
 	price: number | null;
 	buttonText?: string;
-	selected?: boolean;
-}
-
-export interface IBasketCard {
-	title: string;
-	price: number | null;
-	index: number;
+	category?: string;
+	image?: string;
+	description?: string;
+	index?: number;
 }
 
 export interface ICardActions {
@@ -90,3 +84,5 @@ export interface ISuccessActions {
 }
 
 export type FormErrors = Partial<Record<keyof IOrderModel, string>>;
+
+export type TPayment = 'card' | 'cash';

@@ -7,7 +7,7 @@ import { Page } from './components/Page';
 import { Modal } from './components/common/Modal';
 import { cloneTemplate, ensureElement } from './utils/utils';
 import { Basket } from './components/Basket';
-import { IItem, IOrderModel } from './types';
+import { IItem, IOrderModel, TPayment } from './types';
 import { AppState } from './components/AppState';
 import { FormContacts, FormOrder } from './components/Forms';
 import { BasketCard, CatalogCard, CatalogCardView } from './components/Cards';
@@ -35,6 +35,11 @@ const formContacts = new FormContacts(
 	cloneTemplate(formContactsTemplate),
 	events
 );
+const success = new ModalSuccess(cloneTemplate(modalSuccessTemplate), {
+	onClick: () => {
+		modal.close();
+	},
+});
 
 api
 	.getItemsList()
@@ -58,17 +63,36 @@ events.on('catalog:changed', () => {
 	});
 });
 
+events.on('basket:changed', () => {
+	basket.total = appData.getTotal();
+
+	basket.list = appData.basket.map((item, index) => {
+		const basketCard = new BasketCard(cloneTemplate(cardBasketTemplate), {
+			onClick: () => {
+				events.emit('card:deleteFromBasket', item);
+			},
+		});
+
+		return basketCard.render({
+			title: item.title,
+			price: item.price,
+			index: index + 1,
+		});
+	});
+});
+
 events.on('card:select', (item: IItem) => {
 	const isInBasket = appData.isInBasket(item.id);
 	const card = new CatalogCardView(cloneTemplate(cardViewTemplate), 'card', {
 		onClick: () => {
 			if (isInBasket) {
-				events.emit('card:deleteFromBasketView', item);
+				events.emit('card:deleteFromBasket', item);
 			} else {
 				events.emit('card:toBasket', item);
 			}
 		},
 	});
+
 	modal.render({
 		content: card.render({
 			title: item.title,
@@ -81,56 +105,33 @@ events.on('card:select', (item: IItem) => {
 	});
 });
 
-events.on('card:deleteFromBasketView', (item: IItem) => {
-	appData.removeFromBasket(item.id);
-	item.selected = false;
-	page.counter = appData.countItems();
+events.on('card:toBasket', (item: IItem) => {
+	appData.addToBasket(item);
+	events.emit('сounter:change');
 	modal.close();
 });
 
-events.on('card:toBasket', (item: IItem) => {
-	appData.addToBasket(item);
-	item.selected = true;
+events.on('card:deleteFromBasket', (item: IItem) => {
+	appData.removeFromBasket(item);
+	events.emit('сounter:change');
+});
+
+events.on('сounter:change', () => {
 	page.counter = appData.countItems();
-	modal.close();
 });
 
 events.on('basket:open', () => {
-	basket.total = appData.getTotal();
-	appData.basket.length === 0
-		? basket.disableButton(true)
-		: basket.disableButton(false);
-
-	basket.list = appData.basket.map((item, index) => {
-		const basketCard = new BasketCard(cloneTemplate(cardBasketTemplate), {
-			onClick: () => {
-				events.emit('card:deleteFromBasket', item);
-			},
-		});
-		basketCard.index = index + 1;
-
-		return basketCard.render({
-			title: item.title,
-			price: item.price,
-		});
-	});
 	modal.render({
 		content: basket.render(),
 	});
 });
 
-events.on('card:deleteFromBasket', (item: IItem) => {
-	appData.removeFromBasket(item.id);
-	item.selected = false;
-	page.counter = appData.countItems();
-	events.emit('basket:open');
-});
-
 events.on('basket:makeOrder', () => {
-	appData.getTotal();
 	modal.render({
 		content: formOrder.render({
-			valid: false,
+			payment: appData.orderInfo.payment,
+			address: appData.orderInfo.address,
+			valid: appData.validateOrder(),
 			errors: [],
 		}),
 	});
@@ -162,7 +163,9 @@ events.on(
 events.on('order:submit', () => {
 	modal.render({
 		content: formContacts.render({
-			valid: false,
+			email: appData.orderInfo.email,
+			phone: appData.orderInfo.phone,
+			valid: appData.validateContacts(),
 			errors: [],
 		}),
 	});
@@ -175,16 +178,9 @@ events.on('contacts:submit', () => {
 	api
 		.sendOrder(appData.orderInfo, total, items)
 		.then((res) => {
-			const success = new ModalSuccess(cloneTemplate(modalSuccessTemplate), {
-				onClick: () => {
-					modal.close();
-				},
-			});
-
 			appData.clearBasket();
-			page.counter = appData.countItems();
-			formOrder.clearForm();
-			formContacts.clearForm();
+			appData.clearOrderInfo();
+			events.emit('сounter:change');
 
 			modal.render({
 				content: success.render({
