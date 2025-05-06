@@ -1,4 +1,4 @@
-import { FormErrors, IAppState, IItem, IOrderModel, TPayment } from '../types';
+import { FormErrors, IAppState, IItem, IOrderModel } from '../types';
 import { Model } from './base/Model';
 
 export class AppState extends Model<IAppState> {
